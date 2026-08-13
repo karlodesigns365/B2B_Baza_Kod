@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <title>B2B Baza Podataka</title>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 text-gray-900 min-h-screen p-3 md:p-8 flex flex-col justify-between">
+    <div class="max-w-6xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8 border-b border-gray-200/80 pb-6">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-blue-700 via-indigo-800 to-blue-900 bg-clip-text text-transparent animate-pulse">B2B Baza Podataka</h1>
+                <p class="text-gray-500 text-sm mt-1 font-medium">Napredni pregled i filtriranje poslovnih subjekata.</p>
+            </div>
+        </div>
+
+        <!-- Filteri -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-gray-200/60 shadow-sm">
+            <input type="text" id="filterNaziv" placeholder="🔍 Pretraži naziv tvrtke/OIB..." class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-sm transition" onkeyup="filterTable()">
+            <input type="text" id="filterGrad" placeholder="📍 Pretraži grad/mjesto..." class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-sm transition" onkeyup="filterTable()">
+            
+            <select id="filterNkd" class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-gray-700 text-sm transition" onchange="filterTable()">
+                <option value="">🗂️ Svi sektori</option>
+                <option value="F">Graditeljstvo i izvođenje radova (F)</option>
+                <option value="J62">Računalstvo i IT (J62)</option>
+                <option value="I56">Ugostiteljstvo i prehrana (I56)</option>
+                <option value="M70">Poslovno savjetovanje (M70)</option>
+            </select>
+        </div>
+			<div class="mb-4 text-sm font-medium text-gray-600">
+				Prikazano subjekata: <span id="recordCount" class="font-bold text-indigo-600">0</span>
+			</div>
+		<div class="flex flex-wrap gap-2 mb-5">
+			<!-- PDF Gumb -->
+			<button onclick="generirajPDF()" class="bg-gradient-to-r from-blue-800 to-indigo-900 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer">
+				<span>📄 PDF</span>
+			</button>
+    
+			<!-- CSV Gumb -->
+			<button onclick="generirajCSV()" class="bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer">
+				<span>📊 CSV</span>
+			</button>
+		</div>
+
+        <!-- Loader -->
+        <div id="loader" class="flex justify-center items-center py-24">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+        </div>
+        
+        <!-- Tablica i Kartice -->
+        <div class="hidden" id="tableContainer">
+            <!-- Desktop Tablica -->
+            <div class="hidden md:block bg-white/90 backdrop-blur-md border border-gray-200/80 rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-gray-600">
+                        <thead class="bg-gray-100/80 text-gray-700 uppercase text-xs tracking-wider border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 font-bold">Naziv Tvrtke</th>
+                                <th class="px-6 py-4 font-bold">OIB</th>
+                                <th class="px-6 py-4 font-bold">Vlasnik</th>
+                                <th class="px-6 py-4 font-bold">NKD</th>
+                                <th class="px-6 py-4 font-bold">Grad/Mjesto</th>
+                                <th class="px-6 py-4 font-bold">Kontakt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mobilne Kartice -->
+            <div id="mobileList" class="grid grid-cols-1 gap-3 md:hidden"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-12 pb-4 border-t border-gray-200/60 pt-6">
+        <p class="text-xs font-semibold bg-gradient-to-r from-blue-700 via-indigo-800 to-blue-900 bg-clip-text text-transparent animate-pulse tracking-wider">
+            KarloDesigns365
+        </p>
+    </footer>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwciSz3UnLyKeNkd6cVzZjWl3BQK4tXAMf3l_TrzAHSX73DtUP9nGRodFL7cZx-PPzEXQ/exec';
+        let cachedData = [];
+        let currentFilteredData = [];
+
+		async function init() {
+            try {
+                const res = await fetch(GAS_URL);
+                if (!res.ok) throw new Error('Mrežni odgovor nije u redu');
+                let data = await res.json();
+                
+                // OBRĆE REDOSLIJED: Da zadnji uneseni subjekt bude prvi na popisu
+                cachedData = data.reverse(); 
+                
+                currentFilteredData = cachedData;
+                
+                document.getElementById('loader').classList.add('hidden');
+                renderTable(cachedData);
+                document.getElementById('tableContainer').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loader').innerHTML = `<p class="text-red-600 font-medium">Greška pri učitavanju podataka s Google Scripts servera.</p>`;
+            }
+        }
+
+		function renderTable(data) {
+            currentFilteredData = data;
+            const tbody = document.getElementById('tableBody');
+            const mobileList = document.getElementById('mobileList');
+
+            const countElement = document.getElementById('recordCount');
+            if (countElement) {
+                countElement.textContent = data ? data.length : 0;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Nema pronađenih subjekata za zadane kriterije.</td></tr>`;
+                mobileList.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-gray-400 border border-gray-200">Nema pronađenih subjekata za zadane kriterije.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => `
+                <tr class="hover:bg-blue-50/40 transition">
+                    <td class="px-6 py-4 font-semibold text-gray-900">${item.naziv || '-'}</td>
+                    <td class="px-6 py-4 font-mono text-gray-500">${item.oib || '-'}</td>
+                    <td class="px-6 py-4 text-gray-700">${item.vlasnik || '-'}</td>
+                    <td class="px-6 py-4 text-xs text-gray-500">${item.nkd || '-'}</td>
+                    <td class="px-6 py-4"><span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-medium">${item.grad || '-'}</span></td>
+                    <td class="px-6 py-4 text-blue-800 font-medium whitespace-nowrap">${item.kontakt || '-'}</td>
+                </tr>
+            `).join('');
+
+			mobileList.innerHTML = data.map(item => `
+                <div class="bg-white border border-gray-200/80 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-gray-900 text-base">${item.naziv || '-'}</h3>
+                        <span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-medium">${item.grad || '-'}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 flex justify-between">
+                        <span>OIB: <strong class="font-mono text-gray-700">${item.oib || '-'}</strong></span>
+                        <span>NKD: <strong class="text-gray-700">${item.nkd || '-'}</strong></span>
+                    </div>
+                    <div class="text-xs text-gray-600">
+                        <span class="font-medium text-gray-400">Vlasnik:</span> ${item.vlasnik || '-'}
+                    </div>
+                    <div class="text-sm pt-2 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-xs font-medium text-gray-400">Kontakt:</span>
+                        <a href="tel:${item.kontakt}" class="text-blue-800 font-semibold text-xs text-right">${item.kontakt || '-'}</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+		function filterTable() {
+            const query = document.getElementById('filterNaziv').value.toLowerCase().trim();
+            const g = document.getElementById('filterGrad').value.toLowerCase();
+            const nkdVal = document.getElementById('filterNkd').value.toUpperCase();
+            
+            const filtered = cachedData.filter(item => {
+                const itemNaziv = (item.naziv || '').toLowerCase();
+                const itemOib = String(item.oib || '').toLowerCase();
+                const itemGrad = (item.grad || '').toLowerCase();
+                const itemNkd = String(item.nkd || '').toUpperCase();
+
+                // Gleda počinje li OIB, Naziv ili Grad s upisanom vrijednošću
+                const matchNazivIliOib = query === "" || 
+                    itemOib.startsWith(query) || 
+                    itemNaziv.startsWith(query);
+
+                const matchGrad = g === "" || itemGrad.startsWith(g);
+                const matchNkd = nkdVal === "" || itemNkd.startsWith(nkdVal);
+
+                return matchNazivIliOib && matchGrad && matchNkd;
+            });
+            renderTable(filtered);
+        }
+		
+		function populateNkdDropdown(data) {
+            const select = document.getElementById('filterNkd');
+            // Spremij prvu opciju ("Sve djelatnosti"), a obriši ostale stare
+            select.innerHTML = '<option value="">Sve djelatnosti</option>';
+            
+            // Izvadi samo jedinstvene NKD vrijednosti iz podataka
+            const uniqueNkd = [...new Set(data.map(item => item.nkd).filter(Boolean))].sort();
+            
+            // Dodaj ih u dropdown
+            uniqueNkd.forEach(nkd => {
+                const option = document.createElement('option');
+                option.value = nkd;
+                option.textContent = nkd;
+                select.appendChild(option);
+            });
+        }
+
+		function generirajPDF() {
+            if (!currentFilteredData || currentFilteredData.length === 0) {
+                alert("Nema podataka za izradu PDF-a.");
+                return;
+            }
+
+            const tableBody = [
+                [
+                    { text: 'Naziv tvrtke', style: 'tableHeader' },
+                    { text: 'OIB', style: 'tableHeader' },
+                    { text: 'Vlasnik', style: 'tableHeader' },
+                    { text: 'NKD', style: 'tableHeader' },
+                    { text: 'Grad', style: 'tableHeader' },
+                    { text: 'Kontakt', style: 'tableHeader' }
+                ]
+            ];
+            
+            currentFilteredData.forEach((d, index) => {
+                const fillColor = index % 2 === 0 ? '#F0F4FF' : '#FFFFFF';
+                
+                tableBody.push([
+                    { text: d.naziv || '', style: 'tableCell', fillColor: fillColor },
+                    { text: d.oib || '', style: 'tableCell', fillColor: fillColor },
+                    { text: d.vlasnik || '', style: 'tableCell', fillColor: fillColor },
+                    { text: d.nkd || '', style: 'tableCell', fillColor: fillColor },
+                    { text: d.grad || '', style: 'tableCell', fillColor: fillColor },
+                    { text: d.kontakt || '', style: 'tableCell', fillColor: fillColor }
+                ]);
+            });
+
+            const docDefinition = {
+                pageSize: 'A4',
+                pageOrientation: 'landscape',
+                pageMargins: [40, 40, 40, 40],
+                content: [{
+                    table: {
+                        headerRows: 1,
+                        // Prilagođene širine stupaca da kontakt ima dovoljno prostora, a da se tekst lomi unutar granica
+                        widths: ['*', 70, 95, 50, 60, 160],
+                        body: tableBody
+                    },
+                    layout: {
+                        fillColor: function (rowIndex) {
+                            return (rowIndex === 0) ? '#1E3A8A' : null;
+                        },
+                        hLineWidth: function (i, node) {
+                            return (i === 0 || i === node.table.body.length) ? 1 : 0.5;
+                        },
+                        vLineWidth: function () {
+                            return 0;
+                        },
+                        hLineColor: function () {
+                            return '#DBEAFE';
+                        },
+                        paddingTop: function () { return 7; },
+                        paddingBottom: function () { return 7; },
+                        paddingLeft: function () { return 6; },
+                        paddingRight: function () { return 6; }
+                    }
+                }],
+                styles: {
+                    tableHeader: { 
+                        bold: true, 
+                        fontSize: 10, 
+                        color: '#FFFFFF',
+                        margin: [0, 2, 0, 2]
+                    },
+                    tableCell: { 
+                        fontSize: 9, 
+                        color: '#1E293B',
+                        margin: [0, 2, 0, 2]
+                    }
+                }
+            };
+            
+            pdfMake.createPdf(docDefinition).download('B2B_Popis_Subjekata.pdf');
+        }
+		
+		function generirajCSV() {
+            if (!currentFilteredData || currentFilteredData.length === 0) {
+                alert("Nema podataka za izradu CSV-a.");
+                return;
+            }
+
+            // Definicija zaglavlja CSV-a
+            let csvContent = "\uFEFF"; // BOM za pravilnu podršku za HR znakove (čćžšđ) u Excelu
+            csvContent += "Naziv tvrtke;OIB;Vlasnik;NKD;Grad;Kontakt\n";
+
+            // Dodavanje redova
+            currentFilteredData.forEach(d => {
+                const naziv = `"${(d.naziv || '').replace(/"/g, '""')}"`;
+                const oib = `"${(d.oib || '').replace(/"/g, '""')}"`;
+                const vlasnik = `"${(d.vlasnik || '').replace(/"/g, '""')}"`;
+                const nkd = `"${(d.nkd || '').replace(/"/g, '""')}"`;
+                const grad = `"${(d.grad || '').replace(/"/g, '""')}"`;
+                const kontakt = `"${(d.kontakt || '').replace(/"/g, '""')}"`;
+
+                csvContent += `${naziv};${oib};${vlasnik};${nkd};${grad};${kontakt}\n`;
+            });
+
+            // Stvaranje blob objekta i pokretanje preuzimanja
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "B2B_Popis_Subjekata.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        init();
+    </script>
+</body>
+</html>
