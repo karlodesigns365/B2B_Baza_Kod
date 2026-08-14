@@ -6,6 +6,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <title>B2B Baza Podataka</title>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 text-gray-900 min-h-screen p-3 md:p-8 flex flex-col justify-between">
@@ -20,31 +22,73 @@
 
         <!-- Filteri -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-gray-200/60 shadow-sm">
-            <input type="text" id="filterNaziv" placeholder="🔍 Pretraži naziv tvrtke/OIB..." class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-sm transition" onkeyup="filterTable()">
-            <input type="text" id="filterGrad" placeholder="📍 Pretraži grad/mjesto..." class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-sm transition" onkeyup="filterTable()">
+            <input type="text" id="filterNaziv" placeholder="🔍 Pretraži Naziv tvrtke/OIB..." class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-sm transition" onkeyup="filterTable()">
+            <input type="text" id="filterGrad" placeholder="📍 Pretraži Grad/Mjesto..." class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-sm transition" onkeyup="filterTable()">
             
             <select id="filterNkd" class="p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none w-full bg-white text-gray-700 text-sm transition" onchange="filterTable()">
                 <option value="">🗂️ Svi sektori</option>
-                <option value="F">Graditeljstvo i izvođenje radova (F)</option>
-                <option value="J62">Računalstvo i IT (J62)</option>
-                <option value="I56">Ugostiteljstvo i prehrana (I56)</option>
-                <option value="M70">Poslovno savjetovanje (M70)</option>
+                <option value="F">👷‍♂️ Graditeljstvo i izvođenje radova (F)</option>
+                <option value="J62">👨‍💻 Računalstvo i IT (J62)</option>
+                <option value="I56">🍽️ Ugostiteljstvo i prehrana (I56)</option>
+                <option value="M70">💼 Poslovno savjetovanje (M70)</option>
             </select>
         </div>
-			<div class="mb-4 text-sm font-medium text-gray-600">
-				Prikazano subjekata: <span id="recordCount" class="font-bold text-indigo-600">0</span>
-			</div>
-		<div class="flex flex-wrap gap-2 mb-5">
-			<!-- PDF Gumb -->
-			<button onclick="generirajPDF()" class="bg-gradient-to-r from-blue-800 to-indigo-900 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer">
-				<span>📄 PDF</span>
-			</button>
+        
+<div class="mb-4 text-sm font-medium text-gray-600">
+    Prikazano subjekata: <span id="recordCount" class="font-bold text-indigo-600">0</span>
+</div>
+
+<!-- Kartica za Geografsku statistiku -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 transition-all duration-300">
     
-			<!-- CSV Gumb -->
-			<button onclick="generirajCSV()" class="bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer">
-				<span>📊 CSV</span>
-			</button>
-		</div>
+    <!-- Gumb za otvaranje / zatvaranje -->
+    <button type="button" onclick="toggleGeoStats()" class="w-full p-4 flex items-center justify-between hover:bg-gray-50/80 rounded-2xl transition cursor-pointer">
+        <div class="flex items-center gap-3">
+            <!-- Pulsirajući zeleni/indigo indikator -->
+            <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-600"></span>
+            </span>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap;">
+    <span style="font-size: 18px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(79, 70, 229, 0.3));">🌍</span>
+    <span style="background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Geografska statistika baze</span>
+</span>
+            <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-medium">Analitika</span>
+        </div>
+
+        <!-- Ikona strelice -->
+        <svg id="geoStatsChevron" class="w-5 h-5 text-gray-400 transition-transform duration-300 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+    </button>
+
+    <!-- Skriveni sadržaj s dijagramom -->
+    <div id="geoStatsContent" class="hidden p-4 border-t border-gray-100">
+        <div class="w-full h-60 relative">
+            <canvas id="geoChart"></canvas>
+        </div>
+    </div>
+</div>
+        
+<div class="flex flex-wrap gap-2 mb-5">
+    <!-- PDF Gumb -->
+    <button onclick="generirajPDF()" class="bg-gradient-to-r from-blue-800 to-indigo-900 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer">
+        <span>📄 PDF</span>
+    </button>
+
+    <!-- CSV Gumb -->
+    <button onclick="generirajCSV()" class="bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer">
+        <span>📊 CSV</span>
+    </button>
+
+    <!-- Kopiraj Mailove (BCC) Gumb -->
+    <button onclick="kopirajEmailove()" class="bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 w-full sm:w-auto cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+        </svg>
+        <span>Kopiraj e-mail adrese</span>
+    </button>
+</div>
 
         <!-- Loader -->
         <div id="loader" class="flex justify-center items-center py-24">
@@ -59,6 +103,7 @@
                     <table class="w-full text-left text-sm text-gray-600">
                         <thead class="bg-gray-100/80 text-gray-700 uppercase text-xs tracking-wider border-b border-gray-200">
                             <tr>
+                                <th class="w-10 px-4 py-4"></th> <!-- Prazan stupac za checkbox -->
                                 <th class="px-6 py-4 font-bold">Naziv Tvrtke</th>
                                 <th class="px-6 py-4 font-bold">OIB</th>
                                 <th class="px-6 py-4 font-bold">Vlasnik</th>
@@ -85,19 +130,28 @@
     </footer>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwciSz3UnLyKeNkd6cVzZjWl3BQK4tXAMf3l_TrzAHSX73DtUP9nGRodFL7cZx-PPzEXQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAjDLS42k8QkYIzeqKShwmDdCEZIzUFEmKesS2sFt4d4R_zqmUHqokKqz-aawJZ-RpBg/exec';
         let cachedData = [];
         let currentFilteredData = [];
+        let selectedOibs = new Set();
 
-		async function init() {
+        async function init() {
             try {
                 const res = await fetch(GAS_URL);
                 if (!res.ok) throw new Error('Mrežni odgovor nije u redu');
                 let data = await res.json();
                 
-                // OBRĆE REDOSLIJED: Da zadnji uneseni subjekt bude prvi na popisu
-                cachedData = data.reverse(); 
-                
+                let zabilježeniOIBi = new Set();
+                let cleanData = data.filter(item => {
+                    let oib = item.oib ? String(item.oib).trim() : '';
+                    if (oib && !zabilježeniOIBi.has(oib)) {
+                        zabilježeniOIBi.add(oib);
+                        return true;
+                    }
+                    return false;
+                });
+
+                cachedData = cleanData.reverse(); 
                 currentFilteredData = cachedData;
                 
                 document.getElementById('loader').classList.add('hidden');
@@ -105,59 +159,98 @@
                 document.getElementById('tableContainer').classList.remove('hidden');
             } catch (err) {
                 console.error(err);
-                document.getElementById('loader').innerHTML = `<p class="text-red-600 font-medium">Greška pri učitavanju podataka s Google Scripts servera.</p>`;
+                document.getElementById('loader').innerHTML = `
+    <div class="flex flex-col items-center justify-center gap-2 p-4 text-center">
+        <p class="text-red-600 font-medium text-sm">
+            Greška pri učitavanju podataka sa servera.
+        </p>
+        <button onclick="window.location.reload()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-medium text-xs rounded-lg transition border border-red-200 cursor-pointer shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Osvježi stranicu</span>
+        </button>
+    </div>
+`;
             }
         }
 
-		function renderTable(data) {
-            currentFilteredData = data;
-            const tbody = document.getElementById('tableBody');
-            const mobileList = document.getElementById('mobileList');
+function renderTable(data) {
+    currentFilteredData = data;
+    const tbody = document.getElementById('tableBody');
+    const mobileList = document.getElementById('mobileList');
 
-            const countElement = document.getElementById('recordCount');
-            if (countElement) {
-                countElement.textContent = data ? data.length : 0;
-            }
+    const countElement = document.getElementById('recordCount');
+    if (countElement) {
+        countElement.textContent = data ? data.length : 0;
+    }
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Nema pronađenih subjekata za zadane kriterije.</td></tr>`;
-                mobileList.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-gray-400 border border-gray-200">Nema pronađenih subjekata za zadane kriterije.</div>`;
-                return;
-            }
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Nema pronađenih subjekata za zadane kriterije.</td></tr>`;
+        mobileList.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-gray-400 border border-gray-200">Nema pronađenih subjekata za zadane kriterije.</div>`;
+        
+        // 1. POZIV OVDJE: Osvježava (i prazni) dijagram ako nema rezultata
+        azurirajGeoDijagram(); 
+        return;
+    }
 
-            tbody.innerHTML = data.map(item => `
-                <tr class="hover:bg-blue-50/40 transition">
-                    <td class="px-6 py-4 font-semibold text-gray-900">${item.naziv || '-'}</td>
-                    <td class="px-6 py-4 font-mono text-gray-500">${item.oib || '-'}</td>
-                    <td class="px-6 py-4 text-gray-700">${item.vlasnik || '-'}</td>
-                    <td class="px-6 py-4 text-xs text-gray-500">${item.nkd || '-'}</td>
-                    <td class="px-6 py-4"><span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-medium">${item.grad || '-'}</span></td>
-                    <td class="px-6 py-4 text-blue-800 font-medium whitespace-nowrap">${item.kontakt || '-'}</td>
-                </tr>
-            `).join('');
+    tbody.innerHTML = data.map(item => {
+        const isChecked = selectedOibs.has(String(item.oib).trim()) ? 'checked' : '';
+        return `
+        <tr class="hover:bg-blue-50/40 transition">
+            <td class="px-4 py-4 text-center align-middle">
+			<input type="checkbox" class="row-checkbox w-4 h-4 min-w-[16px] min-h-[16px] text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0 cursor-pointer accent-blue-600" value="${item.oib}" ${isChecked} onchange="toggleSelect('${item.oib}')">
+			</td>
+            <td class="px-6 py-4 font-semibold text-gray-900">${item.naziv || '-'}</td>
+            <td class="px-6 py-4 font-mono text-gray-500">${item.oib || '-'}</td>
+            <td class="px-6 py-4 text-gray-700">${item.vlasnik || '-'}</td>
+            <td class="px-6 py-4 text-xs text-gray-500">${item.nkd || '-'}</td>
+            <td class="px-6 py-4"><span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-medium">${item.grad || '-'}</span></td>
+            <td class="px-6 py-4 text-blue-800 font-medium whitespace-nowrap">${item.kontakt || '-'}</td>
+        </tr>
+    `;
+    }).join('');
 
-			mobileList.innerHTML = data.map(item => `
-                <div class="bg-white border border-gray-200/80 rounded-xl p-4 shadow-sm flex flex-col gap-3">
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-bold text-gray-900 text-base">${item.naziv || '-'}</h3>
-                        <span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-medium">${item.grad || '-'}</span>
-                    </div>
-                    <div class="text-xs text-gray-500 flex justify-between">
-                        <span>OIB: <strong class="font-mono text-gray-700">${item.oib || '-'}</strong></span>
-                        <span>NKD: <strong class="text-gray-700">${item.nkd || '-'}</strong></span>
-                    </div>
-                    <div class="text-xs text-gray-600">
-                        <span class="font-medium text-gray-400">Vlasnik:</span> ${item.vlasnik || '-'}
-                    </div>
-                    <div class="text-sm pt-2 border-t border-gray-100 flex items-center justify-between">
-                        <span class="text-xs font-medium text-gray-400">Kontakt:</span>
-                        <a href="tel:${item.kontakt}" class="text-blue-800 font-semibold text-xs text-right">${item.kontakt || '-'}</a>
-                    </div>
+    mobileList.innerHTML = data.map(item => {
+        const isChecked = selectedOibs.has(String(item.oib).trim()) ? 'checked' : '';
+        return `
+        <div class="bg-white border border-gray-200/80 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" value="${item.oib}" ${isChecked} onchange="toggleSelect('${item.oib}')">
+                    <h3 class="font-bold text-gray-900 text-base">${item.naziv || '-'}</h3>
                 </div>
-            `).join('');
+                <span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-medium">${item.grad || '-'}</span>
+            </div>
+            <div class="text-xs text-gray-500 flex justify-between">
+                <span>OIB: <strong class="font-mono text-gray-700">${item.oib || '-'}</strong></span>
+                <span>NKD: <strong class="text-gray-700">${item.nkd || '-'}</strong></span>
+            </div>
+            <div class="text-xs text-gray-600">
+                <span class="font-medium text-gray-400">Vlasnik:</span> ${item.vlasnik || '-'}
+            </div>
+            <div class="text-sm pt-2 border-t border-gray-100 flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-400">Kontakt:</span>
+                <a href="tel:${item.kontakt}" class="text-blue-800 font-semibold text-xs text-right">${item.kontakt || '-'}</a>
+            </div>
+        </div>
+    `;
+    }).join('');
+
+    // 2. POZIV OVDJE: Generira dijagram na temelju filtriranih podataka
+    azurirajGeoDijagram();
+}
+        
+        function toggleSelect(oib) {
+            const cleanOib = String(oib).trim();
+            if (selectedOibs.has(cleanOib)) {
+                selectedOibs.delete(cleanOib);
+            } else {
+                selectedOibs.add(cleanOib);
+            }
         }
 
-		function filterTable() {
+        function filterTable() {
             const query = document.getElementById('filterNaziv').value.toLowerCase().trim();
             const g = document.getElementById('filterGrad').value.toLowerCase();
             const nkdVal = document.getElementById('filterNkd').value.toUpperCase();
@@ -168,7 +261,6 @@
                 const itemGrad = (item.grad || '').toLowerCase();
                 const itemNkd = String(item.nkd || '').toUpperCase();
 
-                // Gleda počinje li OIB, Naziv ili Grad s upisanom vrijednošću
                 const matchNazivIliOib = query === "" || 
                     itemOib.startsWith(query) || 
                     itemNaziv.startsWith(query);
@@ -180,33 +272,27 @@
             });
             renderTable(filtered);
         }
-		
-		function populateNkdDropdown(data) {
-            const select = document.getElementById('filterNkd');
-            // Spremij prvu opciju ("Sve djelatnosti"), a obriši ostale stare
-            select.innerHTML = '<option value="">Sve djelatnosti</option>';
-            
-            // Izvadi samo jedinstvene NKD vrijednosti iz podataka
-            const uniqueNkd = [...new Set(data.map(item => item.nkd).filter(Boolean))].sort();
-            
-            // Dodaj ih u dropdown
-            uniqueNkd.forEach(nkd => {
-                const option = document.createElement('option');
-                option.value = nkd;
-                option.textContent = nkd;
-                select.appendChild(option);
-            });
-        }
 
+        
 		function generirajPDF() {
-            if (!currentFilteredData || currentFilteredData.length === 0) {
-                alert("Nema podataka za izradu PDF-a.");
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            let dataToExport;
+            
+            if (checkedBoxes.length > 0) {
+                const checkedOibs = Array.from(checkedBoxes).map(cb => String(cb.value).trim());
+                dataToExport = currentFilteredData.filter(item => checkedOibs.includes(String(item.oib).trim()));
+            } else {
+                dataToExport = currentFilteredData;
+            }
+
+            if (!dataToExport || dataToExport.length === 0) {
+                alert("Nema podataka za izvoz!");
                 return;
             }
 
             const tableBody = [
                 [
-                    { text: 'Naziv tvrtke', style: 'tableHeader' },
+                    { text: 'Naziv', style: 'tableHeader' },
                     { text: 'OIB', style: 'tableHeader' },
                     { text: 'Vlasnik', style: 'tableHeader' },
                     { text: 'NKD', style: 'tableHeader' },
@@ -214,80 +300,74 @@
                     { text: 'Kontakt', style: 'tableHeader' }
                 ]
             ];
-            
-            currentFilteredData.forEach((d, index) => {
-                const fillColor = index % 2 === 0 ? '#F0F4FF' : '#FFFFFF';
-                
+
+            dataToExport.forEach((i) => {
                 tableBody.push([
-                    { text: d.naziv || '', style: 'tableCell', fillColor: fillColor },
-                    { text: d.oib || '', style: 'tableCell', fillColor: fillColor },
-                    { text: d.vlasnik || '', style: 'tableCell', fillColor: fillColor },
-                    { text: d.nkd || '', style: 'tableCell', fillColor: fillColor },
-                    { text: d.grad || '', style: 'tableCell', fillColor: fillColor },
-                    { text: d.kontakt || '', style: 'tableCell', fillColor: fillColor }
+                    { text: i.naziv || '' },
+                    { text: i.oib || '' },
+                    { text: i.vlasnik || '' },
+                    { text: i.nkd || '' },
+                    { text: i.grad || '' },
+                    { text: i.kontakt || '' }
                 ]);
             });
 
-            const docDefinition = {
-                pageSize: 'A4',
+			const docDefinition = {
                 pageOrientation: 'landscape',
-                pageMargins: [40, 40, 40, 40],
-                content: [{
-                    table: {
-                        headerRows: 1,
-                        // Prilagođene širine stupaca da kontakt ima dovoljno prostora, a da se tekst lomi unutar granica
-                        widths: ['*', 70, 95, 50, 60, 160],
-                        body: tableBody
-                    },
-                    layout: {
-                        fillColor: function (rowIndex) {
-                            return (rowIndex === 0) ? '#1E3A8A' : null;
+                content: [
+                    { text: 'B2B popis subjekata', style: 'mainHeader' },
+                    { text: `Datum izvoza: ${new Date().toLocaleDateString('hr-HR')}, ${new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`, margin: [0, 0, 0, 10] },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: ['*', 'auto', '*', 'auto', '*', '*'],
+                            body: tableBody
                         },
-                        hLineWidth: function (i, node) {
-                            return (i === 0 || i === node.table.body.length) ? 1 : 0.5;
-                        },
-                        vLineWidth: function () {
-                            return 0;
-                        },
-                        hLineColor: function () {
-                            return '#DBEAFE';
-                        },
-                        paddingTop: function () { return 7; },
-                        paddingBottom: function () { return 7; },
-                        paddingLeft: function () { return 6; },
-                        paddingRight: function () { return 6; }
+                        layout: {
+                            fillColor: function (rowIndex) {
+                                if (rowIndex === 0) {
+                                    return '#1e3a8a'; 
+                                }
+  
+                                return (rowIndex % 2 === 0) ? '#eff6ff' : '#ffffff';
+                            },
+                            hLineWidth: function () { return 0.5; },
+                            vLineWidth: function () { return 0; },
+                            paddingTop: function() { return 8; },
+                            paddingBottom: function() { return 8; }
+                        }
                     }
-                }],
+                ],
                 styles: {
-                    tableHeader: { 
-                        bold: true, 
-                        fontSize: 10, 
-                        color: '#FFFFFF',
-                        margin: [0, 2, 0, 2]
-                    },
-                    tableCell: { 
-                        fontSize: 9, 
-                        color: '#1E293B',
-                        margin: [0, 2, 0, 2]
-                    }
-                }
+                    mainHeader: { fontSize: 22, bold: true, color: '#1e3a8a', margin: [0, 0, 0, 5] },
+                    tableHeader: { bold: true, color: 'white', fontSize: 11 }
+                },
+                defaultStyle: { fontSize: 9 }
             };
-            
+
             pdfMake.createPdf(docDefinition).download('B2B_Popis_Subjekata.pdf');
         }
-		
-		function generirajCSV() {
-            if (!currentFilteredData || currentFilteredData.length === 0) {
-                alert("Nema podataka za izradu CSV-a.");
+        
+        function generirajCSV() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            let dataToExport;
+            
+            if (checkedBoxes.length > 0) {
+                const checkedOibs = Array.from(checkedBoxes).map(cb => String(cb.value).trim());
+                dataToExport = currentFilteredData.filter(item => checkedOibs.includes(String(item.oib).trim()));
+            } else {
+                dataToExport = currentFilteredData;
+            }
+
+            if (!dataToExport || dataToExport.length === 0) {
+                alert("Nema podataka za izvoz!");
                 return;
             }
 
-            // Definicija zaglavlja CSV-a
-            let csvContent = "\uFEFF"; // BOM za pravilnu podršku za HR znakove (čćžšđ) u Excelu
+            let csvContent = "\uFEFF"; // BOM za HR znakove
             csvContent += "Naziv tvrtke;OIB;Vlasnik;NKD;Grad;Kontakt\n";
 
-            // Dodavanje redova
-            currentFilteredData.forEach(d => {
+            dataToExport.forEach(d => {
                 const naziv = `"${(d.naziv || '').replace(/"/g, '""')}"`;
                 const oib = `"${(d.oib || '').replace(/"/g, '""')}"`;
                 const vlasnik = `"${(d.vlasnik || '').replace(/"/g, '""')}"`;
@@ -298,7 +378,6 @@
                 csvContent += `${naziv};${oib};${vlasnik};${nkd};${grad};${kontakt}\n`;
             });
 
-            // Stvaranje blob objekta i pokretanje preuzimanja
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -308,8 +387,241 @@
             link.click();
             document.body.removeChild(link);
         }
+		
+async function kopirajEmailove() {
+	const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    let dataToExport;
+    
+    if (checkedBoxes.length > 0) {
+        const checkedOibs = Array.from(checkedBoxes).map(cb => String(cb.value).trim());
+        dataToExport = currentFilteredData.filter(item => checkedOibs.includes(String(item.oib).trim()));
+    } else {
+        dataToExport = currentFilteredData;
+    }
+
+    if (!dataToExport || dataToExport.length === 0) {
+        alert("Nema podataka za izdvajanje e-mailova!");
+        return;
+    }
+
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    
+    let pronadjeniEmailovi = [];
+
+    dataToExport.forEach(item => {
+        const kontaktTekst = item.kontakt || '';
+        const matches = kontaktTekst.match(emailRegex);
+        if (matches) {
+            pronadjeniEmailovi.push(...matches);
+        }
+    });
+
+    const unikatniEmailovi = [...new Set(pronadjeniEmailovi)];
+
+    if (unikatniEmailovi.length === 0) {
+        alert("Niti jedan od odabranih subjekata nema valjanu e-mail adresu u polju kontakt.");
+        return;
+    }
+
+    const bccString = unikatniEmailovi.join(', ');
+
+    try {
+        await navigator.clipboard.writeText(bccString);
+        alert(`Uspješno kopirano ${unikatniEmailovi.length} e-mail adresa/e!`);
+    } catch (err) {
+        console.error('Greška pri kopiranju: ', err);
+        prompt("Kopirajte e-mail adrese ručno (Ctrl+C / Cmd+C):", bccString);
+    }
+}
+
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.type === 'checkbox') {
+        const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+        const container = document.getElementById('selectedCountContainer');
+        const selectedCountEl = document.getElementById('selectedCount');
+        
+        const count = checkedBoxes.length;
+
+        if (count > 0) {
+            selectedCountEl.textContent = count;
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+        } else {
+            container.classList.add('hidden');
+            container.classList.remove('flex');
+        }
+    }
+});
+function ponistiSveOdabrano() {
+    // 1. Odznači sve checkboxove u tablici i zaglavlju
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+
+    // 2. Sakrij plutajuću traku
+    const container = document.getElementById('selectedCountContainer');
+    if (container) {
+        container.classList.add('hidden');
+        container.classList.remove('flex');
+    }
+}
+let myGeoChart = null;
+
+// Funkcija za otvaranje i zatvaranje dropdowna
+function toggleGeoStats() {
+    const content = document.getElementById('geoStatsContent');
+    const chevron = document.getElementById('geoStatsChevron');
+    
+    if (!content) return;
+
+    content.classList.toggle('hidden');
+    
+    if (chevron) {
+        chevron.classList.toggle('rotate-180');
+    }
+
+    // Kada se otvori, nacrtaj ili osvježi dijagram
+    if (!content.classList.contains('hidden')) {
+        azurirajGeoDijagram();
+    }
+}
+
+// Funkcija za prebrojavanje i crtanje Horizontalnog Bar Charta
+function azurirajGeoDijagram() {
+    const content = document.getElementById('geoStatsContent');
+    // Ako je skriveno ili nema podataka, ne crtaj ništa
+    if (!content || content.classList.contains('hidden')) return;
+    if (!currentFilteredData || currentFilteredData.length === 0) return;
+
+    const ukupnoSubjekata = currentFilteredData.length;
+
+    // 1. Grupiranje i prebrojavanje gradova
+    const lokacijeBrojac = {};
+    currentFilteredData.forEach(item => {
+        const grad = (item.grad || 'Nepoznato').trim();
+        lokacijeBrojac[grad] = (lokacijeBrojac[grad] || 0) + 1;
+    });
+
+    // 2. Sortiranje od najvećeg prema najmanjem
+    const sortiraneLokacije = Object.entries(lokacijeBrojac).sort((a, b) => b[1] - a[1]);
+
+    // 3. Izdvajanje Top 3 + Ostali
+    const top3 = sortiraneLokacije.slice(0, 3);
+    const ostali = sortiraneLokacije.slice(3);
+
+    const labele = [];
+    const podaci = [];
+
+    top3.forEach(item => {
+        const postotak = Math.round((item[1] / ukupnoSubjekata) * 100);
+        labele.push(`${item[0]} (${item[1]} • ${postotak}%)`);
+        podaci.push(item[1]);
+    });
+
+    if (ostali.length > 0) {
+        const sumaOstali = ostali.reduce((sum, item) => sum + item[1], 0);
+        const postotakOstali = Math.round((sumaOstali / ukupnoSubjekata) * 100);
+        labele.push(`Ostali (${sumaOstali} • ${postotakOstali}%)`);
+        podaci.push(sumaOstali);
+    }
+
+    // 4. Crtanje dijagrama
+    const canvasElement = document.getElementById('geoChart');
+    if (!canvasElement) return;
+
+    const ctx = canvasElement.getContext('2d');
+
+    // Obriši prethodni chart ako postoji
+    if (myGeoChart) {
+        myGeoChart.destroy();
+    }
+
+    myGeoChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labele,
+            datasets: [{
+                data: podaci,
+                backgroundColor: [
+                    '#4F46E5', // Indigo
+                    '#0284C7', // Plava
+                    '#0D9488', // Teal
+                    '#64748B'  // Siva
+                ],
+                borderRadius: 6,
+                barThickness: 22
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Pretvara u horizontalni bar
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false } // Sakrij nepotrebnu legendu
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 12, weight: '600' },
+                        color: '#374151'
+                    }
+                }
+            }
+        }
+    });
+}
 
         init();
     </script>
+
+<div id="selectedCountContainer" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 backdrop-blur-md text-white px-3.5 py-2 rounded-2xl shadow-2xl items-center gap-2 border border-gray-700/60 max-w-[95vw] text-xs">
+    
+    <!-- Brojač -->
+    <div class="font-medium whitespace-nowrap pl-1">
+        Odabrano: <span id="selectedCount" class="font-bold text-indigo-400">0</span>
+    </div>
+
+    <div class="h-3.5 w-[1px] bg-gray-700"></div>
+
+    <!-- Akcije (Email, PDF, CSV) -->
+    <div class="flex items-center gap-1.5">
+        <!-- Email Gumb -->
+        <button onclick="kopirajEmailove()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap cursor-pointer shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+            </svg>
+            <span>Email</span>
+        </button>
+
+        <!-- PDF Gumb -->
+        <button onclick="generirajPDF()" class="bg-blue-700 hover:bg-blue-600 text-white font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap cursor-pointer shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            <span>PDF</span>
+        </button>
+
+        <!-- CSV Gumb -->
+        <button onclick="generirajCSV()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap cursor-pointer shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>CSV</span>
+        </button>
+    </div>
+
+    <div class="h-3.5 w-[1px] bg-gray-700"></div>
+
+    <!-- Gumb X za poništavanje odabira -->
+    <button onclick="ponistiSveOdabrano()" title="Poništi odabir" class="text-gray-400 hover:text-white p-1 rounded-md transition hover:bg-gray-800 cursor-pointer flex items-center justify-center">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+</div>
 </body>
 </html>
