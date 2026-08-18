@@ -274,79 +274,83 @@ function renderTable(data) {
         }
 
         
-		function generirajPDF() {
-            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
-            let dataToExport;
-            
-            if (checkedBoxes.length > 0) {
-                const checkedOibs = Array.from(checkedBoxes).map(cb => String(cb.value).trim());
-                dataToExport = currentFilteredData.filter(item => checkedOibs.includes(String(item.oib).trim()));
-            } else {
-                dataToExport = currentFilteredData;
-            }
+function generirajPDF() {
+    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    let dataToExport;
+    
+    if (checkedBoxes.length > 0) {
+        const checkedOibs = Array.from(checkedBoxes).map(cb => String(cb.value).trim());
+        dataToExport = currentFilteredData.filter(item => checkedOibs.includes(String(item.oib).trim()));
+    } else {
+        dataToExport = currentFilteredData;
+    }
 
-            if (!dataToExport || dataToExport.length === 0) {
-                alert("Nema podataka za izvoz!");
-                return;
-            }
+    if (!dataToExport || dataToExport.length === 0) {
+        alert("Nema podataka za izvoz!");
+        return;
+    }
 
-            const tableBody = [
-                [
-                    { text: 'Naziv', style: 'tableHeader' },
-                    { text: 'OIB', style: 'tableHeader' },
-                    { text: 'Vlasnik', style: 'tableHeader' },
-                    { text: 'NKD', style: 'tableHeader' },
-                    { text: 'Grad', style: 'tableHeader' },
-                    { text: 'Kontakt', style: 'tableHeader' }
-                ]
-            ];
+    const tableBody = [
+        [
+            { text: 'Naziv', style: 'tableHeader' },
+            { text: 'OIB', style: 'tableHeader' },
+            { text: 'Vlasnik', style: 'tableHeader' },
+            { text: 'NKD', style: 'tableHeader' },
+            { text: 'Grad', style: 'tableHeader' },
+            { text: 'Kontakt', style: 'tableHeader' }
+        ]
+    ];
 
-            dataToExport.forEach((i) => {
-                tableBody.push([
-                    { text: i.naziv || '' },
-                    { text: i.oib || '' },
-                    { text: i.vlasnik || '' },
-                    { text: i.nkd || '' },
-                    { text: i.grad || '' },
-                    { text: i.kontakt || '' }
-                ]);
-            });
+    dataToExport.forEach((i) => {
+        // Osiguravamo razmak iza svakog zareza za uredno prelamanje ako je potrebno
+        const kontaktFormatted = (i.kontakt || '').replace(/,/g, ', ');
 
-			const docDefinition = {
-                pageOrientation: 'landscape',
-                content: [
-                    { text: 'B2B popis subjekata', style: 'mainHeader' },
-                    { text: `Datum izvoza: ${new Date().toLocaleDateString('hr-HR')}, ${new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`, margin: [0, 0, 0, 10] },
-                    {
-                        table: {
-                            headerRows: 1,
-                            widths: ['*', 'auto', '*', 'auto', '*', '*'],
-                            body: tableBody
-                        },
-                        layout: {
-                            fillColor: function (rowIndex) {
-                                if (rowIndex === 0) {
-                                    return '#1e3a8a'; 
-                                }
-  
-                                return (rowIndex % 2 === 0) ? '#eff6ff' : '#ffffff';
-                            },
-                            hLineWidth: function () { return 0.5; },
-                            vLineWidth: function () { return 0; },
-                            paddingTop: function() { return 8; },
-                            paddingBottom: function() { return 8; }
-                        }
-                    }
-                ],
-                styles: {
-                    mainHeader: { fontSize: 22, bold: true, color: '#1e3a8a', margin: [0, 0, 0, 5] },
-                    tableHeader: { bold: true, color: 'white', fontSize: 11 }
+        tableBody.push([
+            { text: i.naziv || '' },
+            { text: i.oib || '' },
+            { text: i.vlasnik || '' },
+            { text: i.nkd || '' },
+            { text: i.grad || '' },
+            { text: kontaktFormatted, fontSize: 8 } // Smanjen font za kontakt da lijepo stane
+        ]);
+    });
+
+    const docDefinition = {
+        pageOrientation: 'landscape',
+        content: [
+            { text: 'B2B popis subjekata', style: 'mainHeader' },
+            { text: `Datum izvoza: ${new Date().toLocaleDateString('hr-HR')}, ${new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`, margin: [0, 0, 0, 10] },
+            {
+                table: {
+                    headerRows: 1,
+                    // Prilagođene širine: Kontakt dobiva 28% prostora, OIB i NKD automatski
+                    widths: ['22%', 'auto', '18%', 'auto', '15%', '28%'],
+                    body: tableBody
                 },
-                defaultStyle: { fontSize: 9 }
-            };
+                layout: {
+                    fillColor: function (rowIndex) {
+                        if (rowIndex === 0) {
+                            return '#1e3a8a'; 
+                        }
+          
+                        return (rowIndex % 2 === 0) ? '#eff6ff' : '#ffffff';
+                    },
+                    hLineWidth: function () { return 0.5; },
+                    vLineWidth: function () { return 0; },
+                    paddingTop: function() { return 8; },
+                    paddingBottom: function() { return 8; }
+                }
+            }
+        ],
+        styles: {
+            mainHeader: { fontSize: 22, bold: true, color: '#1e3a8a', margin: [0, 0, 0, 5] },
+            tableHeader: { bold: true, color: 'white', fontSize: 11 }
+        },
+        defaultStyle: { fontSize: 9 }
+    };
 
-            pdfMake.createPdf(docDefinition).download('B2B_Popis_Subjekata.pdf');
-        }
+    pdfMake.createPdf(docDefinition).download('B2B_Popis_Subjekata.pdf');
+}
         
         function generirajCSV() {
             const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
